@@ -3,24 +3,30 @@ import { NextResponse } from 'next/server'
 
 
 const isPublicRoute = createRouteMatcher(  [
-    "/",
     "/api/webhook/register",
     "/sign-up",
     "/sign-in"
 ])
 
 export default clerkMiddleware(async (auth , request)=>{
-    if (isPublicRoute(request)) {
-    return NextResponse.next(); // Allow access to public routes
+
+  if (isPublicRoute(request)) {
+    return NextResponse.next(); // Skip auth check for public routes
   }
+   
 
-  // Protect private routes
-  const user = auth();
+  
+  const { userId } = await auth()
 
-  if (!user) {
-    // User not logged in, redirect to /sign-up
+  
+  console.log(userId);
+  
+  if (!userId) {
+    console.log("hiiiii");
     return NextResponse.redirect(new URL('/sign-up', request.url));
   }
+
+  
 
   // If authenticated, allow access
   return NextResponse.next();

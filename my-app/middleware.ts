@@ -13,18 +13,41 @@ export default clerkMiddleware(async (auth , request)=>{
   if (isPublicRoute(request)) {
     return NextResponse.next(); // Skip auth check for public routes
   }
-   
-
-  
   const { userId } = await auth()
-
-  
-  console.log(userId);
+  const client = await clerkClient()
   
   if (!userId) {
-    console.log("hiiiii");
     return NextResponse.redirect(new URL('/sign-up', request.url));
   }
+
+  if(userId){
+  try {
+      const user = await client.users.getUser(userId)
+      const role = user.privateMetadata.role as string | undefined
+  
+      if(role === 'admin' && request.nextUrl.pathname === "/dashboard"){
+              return NextResponse.redirect(new URL('/admin/dashboard', request.url));
+      }
+  
+      if(role !== 'admin' && request.nextUrl.pathname.startsWith('/admin')){
+          return NextResponse.redirect(new URL('/dashboard', request.url));
+      }
+  
+      if(isPublicRoute(request)){
+        return NextResponse.redirect(
+          new URL (
+            role === 'admin' ? '/admin/dashboard' : '/dashboard'
+          )
+        )
+      }
+      
+    }
+  catch (error) {
+    console.error(error)
+    return NextResponse.redirect(new URL ('/error' , request.url))
+  }
+
+}
 
   
 

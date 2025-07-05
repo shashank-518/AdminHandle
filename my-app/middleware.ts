@@ -14,14 +14,14 @@ export default clerkMiddleware(async (auth , request)=>{
     return NextResponse.next(); // Skip auth check for public routes
   }
   const { userId } = await auth()
-  const client = await clerkClient()
   
   if (!userId) {
     return NextResponse.redirect(new URL('/sign-up', request.url));
   }
-
+  
   if(userId){
-  try {
+    try {
+      const client = await clerkClient()
       const user = await client.users.getUser(userId)
       const role = user.privateMetadata.role as string | undefined
   

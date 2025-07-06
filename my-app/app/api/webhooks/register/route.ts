@@ -3,23 +3,25 @@ import { headers } from "next/headers";
 
 import { PrismaClient } from '../../../generated/prisma/client'
 import { WebhookEvent } from "@clerk/nextjs/server";
-import { log } from "console";
+
+const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
+const prisma = new PrismaClient();
+
 
 export async function POST(req: Request) {
-  const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
-
-  const prisma = new PrismaClient();
-
-
+  
   if (!WEBHOOK_SECRET) {
     throw new Error("Please add Webhook Secret");
   }
 
-  const headerPayload = headers();
-  const svix_id = (await headerPayload).get("svix-id");
-  const svix_timestamp = (await headerPayload).get("svix-timestamp");
-  const svix_signature = (await headerPayload).get("svix-signature");
+  
+  const svix_id = req.headers.get("svix-id");
+  const svix_timestamp = req.headers.get("svix-timestamp");
+  const svix_signature = req.headers.get("svix-signature");
 
+
+  
+  
   if (!svix_id || !svix_timestamp || !svix_signature) {
     return new Response("Error occured -No svix headers");
   }

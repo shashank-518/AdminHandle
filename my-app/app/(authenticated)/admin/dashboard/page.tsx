@@ -7,6 +7,10 @@ import { useEffect } from 'react';
 const Admin = () => {
 
     const {user} = useUser()
+    const [totalCount , setTotalCount] = React.useState(0)
+    const [data , setData] = React.useState([])
+    const [role, setRole] = React.useState<string | null>(null);
+    const [loading, setLoading] = React.useState(true);
 
      const userrole = async (id: string) => {
   try {
@@ -25,22 +29,80 @@ const Admin = () => {
   }
 };
 
-    useEffect(()=>{
-    
-            const fetchRole = async () => {
-        if (user?.id) {
-          const role = await userrole(user.id);
-          console.log("User role:", role);
+    const fetchUser  = async()=>{
+        setLoading(true);
+        const data = await fetch('/api/admin/users')
+        const finalvalue = await data.json()
+        
+        setTotalCount(finalvalue.totalCount)
+        setData(finalvalue.data)
+        setLoading(false);
+        
+    }
+
+     useEffect(() => {
+    const fetchData = async () => {
+      if (user?.id) {
+        const fetchedRole = await userrole(user.id);
+        setRole(fetchedRole);
+
+        if (fetchedRole === "admin") {
+          await fetchUser();
         }
-      };
-    
-      fetchRole();
-        },[user])
+      }
+    };
+    fetchData();
+  }, [user]);
+
+  if (loading) {
+  return (
+    <div className="flex h-screen items-center justify-center">
+      <div className="text-lg text-gray-600 animate-pulse">Fetching user data...</div>
+    </div>
+  );
+}
     
 
 
   return (
-    <div>Hello Admin</div>
+     <div className="min-h-screen p-6 bg-gray-100">
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-3xl font-bold mb-4 text-center text-gray-800">
+          👋 Welcome, Admin
+        </h1>
+        <p className="text-center text-gray-600 mb-8">
+          Total Registered Users: <span className="font-semibold">{totalCount}</span>
+        </p>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {data.map((user:any) => (
+            <div
+              key={user.id}
+              className="bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition-all"
+            >
+              <div className="flex items-center gap-4">
+               
+                <div>
+                  <h2 className="text-lg font-semibold">
+                    {user.username || "No username"}
+                  </h2>
+                  <p className="text-sm text-gray-600">
+                    {user.emailAddresses?.[0]?.emailAddress || "No email"}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Role: {user.privateMetadata?.role || "N/A"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {data.length === 0 && (
+          <p className="text-center text-gray-500 mt-10">No users found.</p>
+        )}
+      </div>
+    </div>
   )
 }
 

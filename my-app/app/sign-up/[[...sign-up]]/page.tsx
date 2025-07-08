@@ -1,102 +1,78 @@
 "use client";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardAction,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { useSignUp } from "@clerk/nextjs"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
-import Link from "next/link"
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useSignUp } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function CardDemo() {
+  const { isLoaded, signUp, setActive } = useSignUp();
+  const [emailAddress, setEmailAddress] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [username, setUsername] = useState<string>("");
+  const [phoneNumber, setPhoneNumber] = useState<string>("+91");
+  const [pendingVerification, setPendingVerification] = useState<boolean>(false);
+  const [code, setCode] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  const [showPassword, setShowPassword] = useState<boolean>(false);
 
-    const {isLoaded , signUp , setActive} = useSignUp()
-    const [emailAddress , setemailaddress] = useState<string>("")
-    const [password , setpassword] = useState<string>("")
-    const [pendingVerification , setpendingVerification] = useState<Boolean>(false)
-    const [code , setCode] = useState<string>("")
-    const [error , seterror] = useState<string>("")
-    const [showPassword , setShowPassword] = useState<boolean>(false)
+  const router = useRouter();
 
-    const router = useRouter()
+  if (!isLoaded) return null;
 
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!isLoaded) return;
 
-    if(!isLoaded){
-        return null
+    try {
+      await signUp.create({
+        emailAddress,
+        password,
+        username,
+        phoneNumber,
+      });
+
+      await signUp.prepareEmailAddressVerification({
+        strategy: "email_code",
+      });
+
+      setPendingVerification(true);
+    } catch (error: any) {
+      console.log(JSON.stringify(error, null, 2));
+      setError(error.errors[0]?.message || "Sign up failed");
     }
+  }
 
-    async function submit(e : React.FormEvent){
-        e.preventDefault()
-        if(!isLoaded){
-            return
-        }
+  async function onPressVerify(e: React.FormEvent) {
+    e.preventDefault();
+    if (!isLoaded) return;
 
-        try {
-            await signUp.create({
-                emailAddress,
-                password
-            })
+    try {
+      const completeSignup = await signUp.attemptEmailAddressVerification({ code });
 
-            await signUp.prepareEmailAddressVerification({
-                strategy: "email_code"
-            })
-            setpendingVerification(true)
-
-
-        } catch (error:any) {
-
-            console.log(JSON.stringify(error , null , 2));
-            seterror(error.errors[0].message)
-        }
-
-
-
-
-
-
+      if (completeSignup.status !== "complete") {
+        await setActive({ session: completeSignup.createdSessionId });
+        router.push("/dashboard");
+      } else {
+        console.log("Incomplete signup:", completeSignup);
+      }
+    } catch (err: any) {
+      console.log(JSON.stringify(err, null, 2));
+      setError(err.errors[0]?.message || "Verification failed");
     }
-
-    async function onPressVerify(e:React.FormEvent){
-        e.preventDefault()
-        if(!isLoaded){
-            return
-        }
-
-        try{
-           const completeSignup =  await signUp.attemptEmailAddressVerification({code})
-
-           if(completeSignup.status !== "complete"){
-            console.log(JSON.stringify(completeSignup , null , 2));
-           }
-
-           if(completeSignup.status === "complete"){
-            await setActive({session : completeSignup.createdSessionId})
-            router.push("/dashboard")            
-           }
-
-
-        }
-        catch(err:any){
-            console.log(JSON.stringify(err , null , 2));
-            seterror(err.errors[0].message)
-            
-        }
-
-
-
-    }
-
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
@@ -115,10 +91,34 @@ export default function CardDemo() {
                   type="email"
                   id="email"
                   value={emailAddress}
-                  onChange={(e) => setemailaddress(e.target.value)}
+                  onChange={(e) => setEmailAddress(e.target.value)}
                   required
                 />
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  type="text"
+                  id="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input
+                  type="tel"
+                  id="phone"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder="+911234567890"
+                  required
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <div className="relative">
@@ -126,7 +126,7 @@ export default function CardDemo() {
                     type={showPassword ? "text" : "password"}
                     id="password"
                     value={password}
-                    onChange={(e) => setpassword(e.target.value)}
+                    onChange={(e) => setPassword(e.target.value)}
                     required
                   />
                   <button
@@ -142,11 +142,13 @@ export default function CardDemo() {
                   </button>
                 </div>
               </div>
+
               {error && (
                 <Alert variant="destructive">
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
+
               <Button type="submit" className="w-full">
                 Sign Up
               </Button>
@@ -163,11 +165,13 @@ export default function CardDemo() {
                   required
                 />
               </div>
+
               {error && (
                 <Alert variant="destructive">
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
+
               <Button type="submit" className="w-full">
                 Verify Email
               </Button>
@@ -188,5 +192,4 @@ export default function CardDemo() {
       </Card>
     </div>
   );
-  
 }

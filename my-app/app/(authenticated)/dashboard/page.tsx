@@ -163,8 +163,117 @@ console.log(userId);
     
     }
 
-    return(
-        <h1>Hello World</h1>
-    )
+        return (
+  <div className="min-h-screen bg-gray-100 p-6">
+    <div className="max-w-3xl mx-auto bg-white p-6 rounded-xl shadow-md">
+      <h1 className="text-3xl font-bold text-center mb-6 text-gray-800">📋 My Todo Dashboard</h1>
+
+      {/* Search and Add */}
+      <div className="flex items-center gap-2 mb-4">
+        <input
+          type="text"
+          placeholder="Search todos..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+        />
+      </div>
+
+      {/* Add Todo */}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          const title = e.currentTarget.todo.value;
+          if (title) handleTodo(title);
+          e.currentTarget.reset();
+        }}
+        className="flex gap-2 mb-6"
+      >
+        <input
+          name="todo"
+          placeholder="Add a new todo..."
+          className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
+        />
+        <button
+          type="submit"
+          className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition"
+        >
+          Add
+        </button>
+      </form>
+
+      {/* Loading */}
+      {isLoading && (
+        <p className="text-center text-gray-500 mb-4 animate-pulse">Loading todos...</p>
+      )}
+
+      {/* Todos */}
+      <ul className="space-y-3">
+        {todos.map((todo) => (
+          <li
+            key={todo.id}
+            className="flex items-center justify-between bg-gray-50 px-4 py-2 rounded-lg border"
+          >
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={todo.completed}
+                onChange={() => updateHandleTodo(todo.id, !todo.completed)}
+                className="h-5 w-5"
+              />
+              <span className={`text-gray-800 ${todo.completed ? "line-through" : ""}`}>
+                {todo.title}
+              </span>
+            </div>
+            <button
+              onClick={() => deleteHandleTodo(todo.id)}
+              className="text-red-500 hover:text-red-700 transition"
+            >
+              🗑
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      {/* No Todos */}
+      {!isLoading && todos.length === 0 && (
+        <p className="text-center text-gray-500 mt-6">No todos found.</p>
+      )}
+
+      {/* Pagination */}
+      {totalPages && totalPages > 1 && (
+        <div className="flex justify-center mt-6 gap-2">
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+            <button
+              key={page}
+              onClick={() => fetchtodos(page)}
+              className={`px-3 py-1 rounded-lg border ${
+                currentPage === page
+                  ? "bg-blue-500 text-white"
+                  : "bg-white text-gray-700 hover:bg-blue-100"
+              }`}
+            >
+              {page}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Subscription */}
+      <div className="mt-8 text-center text-sm text-gray-500">
+        {issubscribed ? (
+          <span className="px-3 py-1 bg-green-100 text-green-600 rounded-full font-medium">
+            ✅ Subscribed
+          </span>
+        ) : (
+          <span className="px-3 py-1 bg-yellow-100 text-yellow-600 rounded-full font-medium">
+            ⚠️ Not Subscribed
+          </span>
+        )}
+      </div>
+    </div>
+  </div>
+);
+    
 
 }

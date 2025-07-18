@@ -3,14 +3,13 @@ import { clerkClient } from "@clerk/nextjs/server";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  {params}: {params:{id:string}}
 ) {
   try {
     const client = await clerkClient();
-    // console.log("Params:", params);
+    
 
-    const user = await client.users.getUser(params.id);
-    // console.log("Fetched user:", user);
+    const user = await client.users.getUser(params?.id);
 
     const role = user.privateMetadata?.role;
     console.log("User role:", role);
